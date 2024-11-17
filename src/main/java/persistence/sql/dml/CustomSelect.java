@@ -2,9 +2,8 @@ package persistence.sql.dml;
 
 import jakarta.persistence.Entity;
 
-//todo Object Has Another Object with one to many annotation join table with join query
-public class SelectQueryBuilder extends DMLQueryBuilder {
-    public SelectQueryBuilder(Class<?> clazz) {
+public class CustomSelect extends DMLQueryBuilder {
+    public CustomSelect(Class<?> clazz) {
         super(clazz);
     }
 
@@ -14,7 +13,7 @@ public class SelectQueryBuilder extends DMLQueryBuilder {
         }
 
         String tableName = getTableName();
-        return "SELECT * FROM " + tableName +joinQuery(entityClass)+ ";";
+        return "SELECT * FROM " + tableName + ";";
     }
 
     public String findById(Class<?> entityClass, Object id) {
@@ -23,9 +22,5 @@ public class SelectQueryBuilder extends DMLQueryBuilder {
         }
         String tableName = getTableName();
         return "SELECT * FROM " + tableName + " WHERE id = " + id + ";";
-    }
-
-    private String joinQuery(Class<?> entityClass) {
-        return "SELECT * FROM " + getTableName() +  + ";";
     }
 }

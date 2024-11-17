@@ -2,6 +2,8 @@ package persistence;
 
 import database.DatabaseServer;
 import database.H2;
+import domain.Order;
+import domain.OrderItem;
 import domain.Person;
 import jdbc.JdbcTemplate;
 import org.slf4j.Logger;
@@ -11,6 +13,9 @@ import persistence.entity.impl.DefaultEntityManager;
 import persistence.sql.ddl.CreateTableQueryBuilder;
 import persistence.sql.ddl.DropTableQueryBuilder;
 import persistence.sql.ddl.QueryBuilder;
+
+import java.util.List;
+import java.util.stream.Stream;
 
 public class Application {
     private static final Logger logger = LoggerFactory.getLogger(Application.class);
@@ -22,28 +27,38 @@ public class Application {
             server.start();
 
             final JdbcTemplate jdbcTemplate = new JdbcTemplate(server.getConnection());
-            QueryBuilder ddlQueryBuilder = new CreateTableQueryBuilder(Person.class);
+            createTables(jdbcTemplate);
 
-            String createTableQuery = ddlQueryBuilder.executeQuery();
-            jdbcTemplate.execute(createTableQuery); // Create table
             EntityManager entityManager = new DefaultEntityManager(jdbcTemplate);
 
-            entityManager.persist(Person.of(null,"John", 25,"demian@gmail.com",1));
 
-            entityManager.find(Person.class, 1L);
 
-            entityManager.update(Person.of(1L,"John", 25,null,null));
-            entityManager.flush();
-            entityManager.remove(Person.class, 1L);
 
-            ddlQueryBuilder = new DropTableQueryBuilder(Person.class);
-            ddlQueryBuilder.executeQuery();
-
+            dropTables(jdbcTemplate);
             server.stop();
         } catch (Exception e) {
             logger.error("Error occurred", e);
         } finally {
             logger.info("Application finished");
         }
+    }
+
+    private static void createTables(JdbcTemplate jdbcTemplate) {
+        List<String> createTableQuery = Stream.of(
+                new CreateTableQueryBuilder(Person.class),
+                new CreateTableQueryBuilder(Order.class),
+                new CreateTableQueryBuilder(OrderItem.class)
+        ).map(QueryBuilder::executeQuery).toList();
+
+        createTableQuery.forEach(jdbcTemplate::execute);
+    }
+
+    private static void dropTables(JdbcTemplate jdbcTemplate) {
+        List<String> dropTableQuery = Stream.of(
+                new DropTableQueryBuilder(Person.class),
+                new DropTableQueryBuilder(Order.class),
+                new DropTableQueryBuilder(OrderItem.class)
+        ).map(QueryBuilder::executeQuery).toList();
+        dropTableQuery.forEach(jdbcTemplate::execute);
     }
 }
