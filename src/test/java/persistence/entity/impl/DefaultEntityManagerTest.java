@@ -14,8 +14,7 @@ import persistence.sql.ddl.QueryBuilder;
 import java.sql.Connection;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 
 public class DefaultEntityManagerTest {

@@ -13,6 +13,7 @@ import persistence.entity.impl.DefaultEntityManager;
 import persistence.sql.ddl.CreateTableQueryBuilder;
 import persistence.sql.ddl.DropTableQueryBuilder;
 import persistence.sql.ddl.QueryBuilder;
+import persistence.sql.dml.SelectQueryBuilder;
 
 import java.util.List;
 import java.util.stream.Stream;
@@ -30,9 +31,16 @@ public class Application {
             createTables(jdbcTemplate);
 
             EntityManager entityManager = new DefaultEntityManager(jdbcTemplate);
+            OrderItem orderItem = new OrderItem(null, "item1", 10, 1L);
+            OrderItem orderItem2 = new OrderItem(null, "item2", 1, 1L);
+            Order order = new Order(1L, "123", List.of(orderItem, orderItem2));
 
+            DefaultEntityManager defaultEntityManager = new DefaultEntityManager(jdbcTemplate);
+            defaultEntityManager.find(Order.class, 1L);
 
-
+            SelectQueryBuilder selectQueryBuilder = new SelectQueryBuilder(Order.class);
+            String s = selectQueryBuilder.customSelect(Order.class);
+            System.out.println("joinquery : "+s);
 
             dropTables(jdbcTemplate);
             server.stop();
@@ -49,7 +57,7 @@ public class Application {
                 new CreateTableQueryBuilder(Order.class),
                 new CreateTableQueryBuilder(OrderItem.class)
         ).map(QueryBuilder::executeQuery).toList();
-
+        System.out.println(createTableQuery);
         createTableQuery.forEach(jdbcTemplate::execute);
     }
 

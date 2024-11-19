@@ -13,4 +13,17 @@ public class OrderItem {
     private String product;
 
     private Integer quantity;
+
+    @JoinColumn(name = "order_id")
+    private Long orderId;
+
+    public OrderItem(Long id, String product, Integer quantity, Long orderId) {
+        this.id = id;
+        this.product = product;
+        this.quantity = quantity;
+        this.orderId = orderId;
+    }
+
+    public OrderItem() {
+    }
 }
