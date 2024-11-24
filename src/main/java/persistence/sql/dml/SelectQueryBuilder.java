@@ -7,7 +7,6 @@ import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.stream.Collectors;
 
 //todo Object Has Another Object with one to many annotation join table with join query
 public class SelectQueryBuilder extends DMLQueryBuilder {
@@ -16,46 +15,46 @@ public class SelectQueryBuilder extends DMLQueryBuilder {
     }
 
     public String findAll(Class<?> entityClass) {
-        if (!entityClass.isAnnotationPresent(Entity.class)) {
-            throw new IllegalArgumentException("This Class is not an Entity ");
-        }
+        validatedEntity(entityClass.isAnnotationPresent(Entity.class));
 
         String tableName = getTableName();
-        return "SELECT * FROM " + tableName +joinQuery(entityClass)+ ";";
+        return "SELECT * FROM " + tableName + ";";
     }
 
+
     public String findById(Class<?> entityClass, Object id) {
-        if (!entityClass.isAnnotationPresent(Entity.class)) {
-            throw new IllegalArgumentException("This Class is not an Entity ");
-        }
+        validatedEntity(entityClass.isAnnotationPresent(Entity.class));
         String tableName = getTableName();
         return "SELECT * FROM " + tableName + " WHERE id = " + id + ";";
     }
 
     public String customSelect(Class<?> entityClass) {
-        if (!entityClass.isAnnotationPresent(Entity.class)) {
-            throw new IllegalArgumentException("This Class is not an Entity ");
-        }
+        validatedEntity(entityClass.isAnnotationPresent(Entity.class));
         String tableName = getTableName();
-        return "SELECT * FROM " + tableName +joinQuery(entityClass)+ ";";
+        StringBuilder query = new StringBuilder()
+                .append("SELECT * FROM ")
+                .append(tableName);
+
+        String joinClause = buildJoinClause(entityClass);
+
+        if (!joinClause.isEmpty()) {
+            query.append(joinClause);
+        }
+
+        return "SELECT * FROM " + tableName + joinClause + ";";
     }
 
-    private String joinQuery(Class<?> entityClass) {
-        StringBuilder joinBuilder = new StringBuilder();
-        System.out.println("entityClass = " + entityClass);
+    private String buildJoinClause(Class<?> entityClass) {
+        StringBuilder joins = new StringBuilder();
+
         Arrays.stream(entityClass.getDeclaredFields())
-                .filter(field -> field.isAnnotationPresent(OneToMany.class))
-                .filter(field -> field.getAnnotation(OneToMany.class).fetch() == FetchType.EAGER)
+                .filter(this::isEagerOneToMany)
                 .forEach(field -> {
-                    // Get target entity type from collection
                     Class<?> targetEntity = getTargetEntityType(field);
                     TableMeta targetTableMeta = new TableMeta(targetEntity);
-
-                    // Get join column name
                     String joinColumnName = getJoinColumnName(field);
 
-                    // Build join clause
-                    joinBuilder.append(" LEFT JOIN ")
+                    joins.append(" LEFT JOIN ")
                             .append(targetTableMeta.tableName())
                             .append(" ON ")
                             .append(getTableName())
@@ -63,15 +62,16 @@ public class SelectQueryBuilder extends DMLQueryBuilder {
                             .append(targetTableMeta.tableName())
                             .append(".")
                             .append(joinColumnName);
-
-                    // Add target table columns to select clause
-                    joinBuilder.append(" SELECT ")
-                            .append(targetTableMeta.tableColumn().stream()
-                                    .map(column -> targetTableMeta.tableName() + "." + column.name())
-                                    .collect(Collectors.joining(", ")));
                 });
 
-        return joinBuilder.toString();
+        return joins.toString();
+    }
+
+    private boolean isEagerOneToMany(Field field) {
+        if (!field.isAnnotationPresent(OneToMany.class)) {
+            return false;
+        }
+        return field.getAnnotation(OneToMany.class).fetch() == FetchType.EAGER;
     }
 
     private Class<?> getTargetEntityType(Field field) {
@@ -89,5 +89,11 @@ public class SelectQueryBuilder extends DMLQueryBuilder {
         }
         // Default naming strategy
         return field.getDeclaringClass().getSimpleName().toLowerCase() + "_id";
+    }
+
+    private void validatedEntity(boolean entityClass) {
+        if (!entityClass) {
+            throw new IllegalArgumentException("This Class is not an Entity ");
+        }
     }
 }

@@ -19,22 +19,28 @@ public class EntityRowMapper<T> implements RowMapper<T> {
     @Override
     public T mapRow(ResultSet resultSet) throws SQLException {
         try {
-            Constructor<T> constructor = clazz.getDeclaredConstructor();
-            constructor.setAccessible(true);
-            T entity = constructor.newInstance();
-            for (Field field : clazz.getDeclaredFields()) {
-                field.setAccessible(true);
-                if (isTransient(field)) {
-                    continue;
-                }
-                Object value = resultSet.getObject(getColumnName(field));
-                field.set(entity, value);
-            }
-
+            T entity = createEntity(resultSet);
             return entity;
         } catch (Exception e) {
             throw new RuntimeException("Failed to map row to entity", e);
         }
+    }
+
+    private T createEntity(ResultSet resultSet) throws Exception {
+        Constructor<T> constructor = clazz.getDeclaredConstructor();
+        constructor.setAccessible(true);
+        T entity = constructor.newInstance();
+
+        for (Field field : clazz.getDeclaredFields()) {
+            field.setAccessible(true);
+            if (isTransient(field)) {
+                continue;
+            }
+            Object value = resultSet.getObject(getColumnName(field));
+            field.set(entity, value);
+        }
+
+        return entity;
     }
 
     private boolean isTransient(Field field) {

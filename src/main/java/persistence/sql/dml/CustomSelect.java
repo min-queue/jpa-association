@@ -24,3 +24,4 @@ public class CustomSelect extends DMLQueryBuilder {
         return "SELECT * FROM " + tableName + " WHERE id = " + id + ";";
     }
 }
+
