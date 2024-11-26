@@ -9,6 +9,7 @@ import persistence.sql.dml.SelectQueryBuilder;
 
 import java.lang.reflect.Field;
 import java.util.List;
+import java.util.Optional;
 
 
 public class EntityLoader<T> {
@@ -21,7 +22,8 @@ public class EntityLoader<T> {
     public T load(Class<T> clazz, Long id) {
         try {
             if (hasEagerRelation(clazz)){
-                return jdbcTemplate.queryForObject(new SelectQueryBuilder(clazz).customSelect(clazz), new EntityRowMapper<>(clazz));
+                Class<T> t = (Class<T>) jdbcTemplate.queryForObject(new SelectQueryBuilder(clazz).customSelect(clazz), new EntityRowMapper<>(clazz));
+                loadRelations(t);
             }
             SelectQueryBuilder selectQueryBuilder = new SelectQueryBuilder(clazz);
             return jdbcTemplate.queryForObject(selectQueryBuilder.findById(clazz, id), new EntityRowMapper<>(clazz));
@@ -40,15 +42,14 @@ public class EntityLoader<T> {
         }
     }
 
-    private void loadRelations(T entity) {
-        for (Field field : entity.getClass().getDeclaredFields()) {
-            field.setAccessible(true);
-            if (field.isAnnotationPresent(OneToMany.class)) {
-                OneToMany oneToMany = field.getAnnotation(OneToMany.class);
-                if (oneToMany.fetch() == FetchType.EAGER) {
+    private void loadRelations(Class<T> entity) {
+
+        if (hasEagerRelation(entity)) {
+            for (Field field : entity.getDeclaredFields()) {
+                if (field.isAnnotationPresent(OneToMany.class) && isEager(field)) {
                     loadEagerRelation(entity, field);
                 } else {
-//                    setupLazyRelation(entity, field);
+                    setupLazyRelation(entity, field);
                 }
             }
         }
@@ -67,11 +68,11 @@ public class EntityLoader<T> {
         return field.getAnnotation(OneToMany.class).fetch() == FetchType.EAGER;
     }
 
-    private void loadEagerRelation(T entity, Field field) {
+    private void loadEagerRelation(Class<T> entity, Field field) {
 
     }
 
-    private void setupLazyRelation(T entity, Field field) {
+    private void setupLazyRelation(Class<T> entity, Field field) {
         // Lazy 로딩 설정
     }
 }

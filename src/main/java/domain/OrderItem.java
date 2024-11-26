@@ -24,6 +24,15 @@ public class OrderItem {
         this.orderId = orderId;
     }
 
-    public OrderItem() {
+    public OrderItem() {}
+
+    public Long id(){
+        return id;
+    }
+    public String product(){
+        return product;
+    }
+    public Integer quantity(){
+        return quantity;
     }
 }

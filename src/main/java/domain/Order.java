@@ -23,8 +23,18 @@ public class Order {
         this.orderItems = orderItems;
     }
 
-    public Order() {
+    public Order() {}
 
+    public Long id(){
+        return id;
+    }
+
+    public String orderNumber(){
+        return orderNumber;
+    }
+
+    public List<OrderItem> orderItems(){
+        return orderItems;
     }
 }
 
