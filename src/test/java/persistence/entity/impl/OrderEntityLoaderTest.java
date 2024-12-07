@@ -73,8 +73,6 @@ class OrderEntityLoaderTest {
 
         // When
         Order loadedOrder = orderLoader.load(Order.class, orderId);
-
-
         // Then
         assertNotNull(loadedOrder);
         assertEquals(1L, loadedOrder.id());
